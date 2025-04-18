@@ -1,33 +1,68 @@
 import streamlit as st
 import pandas as pd
 
-df = pd.DataFrame(
-    {"name": ["Alice", "Bob", "Charlie"], "command": ["ls -l", "pwd", "echo Hello"]}
-)
+# Initialize DataFrame in session_state if not present
+if 'df' not in st.session_state:
+    st.session_state.df = pd.DataFrame(
+        {"name": ["Alice", "Bob", "Charlie"], "command": ["ls -l", "pwd", "echo Hello"]}
+    )
 
-st.title("Simple Table with Row Selection")
+if "textinput" not in st.session_state:
+    st.session_state.textinput = ""
 
-# Add a flag to session state to track if we should clear selection
 if "should_clear_selection" not in st.session_state:
     st.session_state.should_clear_selection = False
 
-# Add a button to clear selection
-if st.button("Clear Selection"):
-    # toggle the flag
+
+# Function to clear all inputs
+def on_button_send():
+    # If there is user_text, add it to the DataFrame
+    if st.session_state.textinput.strip():
+        # Add with placeholder name
+        st.session_state.df = pd.concat(
+            [
+                st.session_state.df,
+                pd.DataFrame({"name": ["User Input"], "command": [st.session_state.textinput]}),
+            ],
+            ignore_index=True,
+        )
     st.session_state.should_clear_selection = not st.session_state.should_clear_selection
-    st.rerun()
+    st.session_state.textinput = ""
+
+
+df = st.session_state.df
+
+st.title("Simple Table with Row Selection")
+
+st.text_area("Enter some text:", key="textinput")
+
 
 # Generate a dynamic key based on the clear selection flag
 dataframe_key = f"dataframe_{st.session_state.should_clear_selection}"
 
 event = st.dataframe(
-    df,
+    st.session_state.df,
     use_container_width=True,
     height=200,
     selection_mode="multi-row",
     on_select="rerun",
     key=dataframe_key,
 )
+
+
+def delete_rows():
+    if event.selection and event.selection.rows:
+        selected_indices = event.selection.rows
+        st.session_state.df = st.session_state.df.drop(selected_indices).reset_index(
+            drop=True
+        )
+
+
+# Add a button to send input
+st.button("Send", on_click=on_button_send)
+
+# button to delete selected row in the table
+st.button("Delete Row", on_click=delete_rows)
 
 # Check if rows are selected and display their indices
 if event.selection and event.selection.rows:
