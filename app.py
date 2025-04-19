@@ -17,9 +17,6 @@ if "should_clear_selection" not in st.session_state:
 # Create the view
 st.title("Simple Table with Row Selection")
 
-# Text area for user input
-st.text_area("Enter command:", key="textinput")
-
 
 # Generate a dynamic key based on the clear selection flag
 # This is used to force the dataframe to be re-rendered when the selection changes
@@ -50,7 +47,7 @@ st.dataframe(
 
 # Function to clear input widget and if there is user_text do new row to the DataFrame
 # This is needed to clear the selection when a new row is added
-def on_button_send():
+def on_send_row():
     # If there is user_text, add it to the DataFrame
     if st.session_state.textinput.strip():
         # Add with placeholder name
@@ -68,7 +65,6 @@ def on_button_send():
     st.session_state.should_clear_selection = (
         not st.session_state.should_clear_selection
     )
-    st.session_state.textinput = ""
 
 
 def delete_rows():
@@ -79,9 +75,35 @@ def delete_rows():
             drop=True
         )
 
+col1, col2 = st.columns(2)
+# Add a button to send input in the first column
+with col1:
+    button_send_row = st.button("Send Row", on_click=on_send_row, disabled=(len(st.session_state[dataframe_key].selection.rows) == 0))
 
-# Add a button to send input
-st.button("Send", on_click=on_button_send)
+# Button to delete selected row in the table in the second column
+with col2:
+    st.button("Delete Row", on_click=delete_rows, disabled=(len(st.session_state[dataframe_key].selection.rows) == 0))
 
-# button to delete selected row in the table
-st.button("Delete Row", on_click=delete_rows)
+
+# Text area for user input
+st.text_area("Enter command:", key="textinput")
+
+# Function to clear input widget and if there is user_text do new row to the DataFrame
+# This is needed to clear the selection when a new row is added
+def on_button_send():
+    # If there is user_text, add it to the DataFrame
+    if st.session_state.textinput.strip():
+        # Add with placeholder name
+        st.session_state.df = pd.concat(
+            [
+                st.session_state.df,
+                pd.DataFrame(
+                    {"name": ["User Input"], "command": [st.session_state.textinput]}
+                ),
+            ],
+            ignore_index=True,
+        )
+    st.session_state.textinput = ""
+
+
+st.button("Send Command", on_click=on_button_send, disabled=(len(st.session_state[dataframe_key].selection.rows) > 0))
