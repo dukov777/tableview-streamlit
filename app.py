@@ -45,12 +45,9 @@ def on_select():
     # Check if rows are selected and display their indices
     if event.selection and event.selection.rows:
         selected_indices = event.selection.rows
-        # st.write("Selected row indices:", selected_indices)
-
         # If you want to access the data of selected rows
         selected_data = df.iloc[selected_indices]
-        # st.write("Selected data:")
-        # st.write(selected_data)
+        print("Selected data:", selected_data)
 
 
 st.dataframe(
